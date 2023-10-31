@@ -1,7 +1,11 @@
 import java.util.*;
 import java.io.*;
+import java.util.logging.*;
 
 public class Main {
+    // 创建日志记录器
+    private static final Logger logger = Logger.getLogger(Main.class.getName());
+
     public static class Minion {
         int health;
         int attack;
@@ -35,6 +39,15 @@ public class Main {
     }
 
     public static void main(String[] args) throws IOException {
+        // 配置日志记录器
+        Logger logger = Logger.getLogger("");
+        logger.setLevel(Level.INFO); // 设置日志级别为INFO
+
+        // 创建一个控制台处理程序，将日志消息输出到控制台
+        ConsoleHandler consoleHandler = new ConsoleHandler();
+        consoleHandler.setLevel(Level.INFO); // 设置控制台处理程序的日志级别
+        logger.addHandler(consoleHandler);
+
         Scanner scanner = new Scanner(System.in);
         Player player1 = new Player(30);
         Player player2 = new Player(30);
@@ -53,6 +66,7 @@ public class Main {
                 } else {
                     player2.minions.add(position - 1, summonedMinion);
                 }
+                logger.log(Level.INFO, "Summoned a minion at position {0}, attack: {1}, health: {2}", new Object[]{position, attack, health});
             } else if (command.equals("attack")) {
                 int attackerPos = scanner.nextInt();
                 int targetPos = scanner.nextInt();
@@ -71,6 +85,7 @@ public class Main {
                         player1.performAttack(targetPos, attackerPos);
                     }
                 }
+                logger.log(Level.INFO, "Minion attacked! Target health reduced to {0}", player1.minions.get(targetPos - 1).health);
             } else if (command.equals("end")) {
                 currentPlayer = 1 - currentPlayer; // Switch player
             }

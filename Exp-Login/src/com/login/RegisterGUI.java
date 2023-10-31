@@ -1,10 +1,14 @@
 package com.login;
-import java.awt.event.*;
+
+import javax.mail.MessagingException;
 import javax.swing.*;
-import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.*;
 
 public class RegisterGUI {
+    public static StringBuffer verificationCode = new StringBuffer(EmailUtil.generateVerificationCode());
+
     private static final String filePath = "userDB.txt";
 
     RegisterGUI() {
@@ -23,13 +27,21 @@ public class RegisterGUI {
         passwordStr.setBounds(75, 125, 100, 25);
         mainGUI.add(passwordStr);
 
-        JLabel question = new JLabel("你最喜欢的一个字母是？(密保问题)");
-        question.setBounds(75, 175, 200, 25);
-        mainGUI.add(question);
+        JLabel useremail = new JLabel("邮箱:");
+        useremail.setBounds(75, 175, 200, 25);
+        mainGUI.add(useremail);
 
-        JTextField answer = new JTextField();
-        answer.setBounds(125, 200, 150, 25);
-        mainGUI.add(answer);
+        JLabel code = new JLabel("验证码:");
+        code.setBounds(75, 225, 200, 25);
+        mainGUI.add(code);
+
+        JTextField emailField = new JTextField();
+        emailField.setBounds(125, 175, 150, 25);
+        mainGUI.add(emailField);
+
+        JTextField codeField = new JTextField();
+        codeField.setBounds(125, 225, 150, 25);
+        mainGUI.add(codeField);
 
         JTextField userID = new JTextField();
         userID.setBounds(125, 75, 150, 25);
@@ -39,18 +51,24 @@ public class RegisterGUI {
         password.setBounds(125, 125, 150, 25);
         mainGUI.add(password);
 
+        JButton sendVerificationCodeButton = new JButton("发送验证码");
+        sendVerificationCodeButton.setBounds(150, 275, 100, 25);
+        mainGUI.add(sendVerificationCodeButton);
+
+
         JCheckBox showPasswordCheckBox = new JCheckBox();
         showPasswordCheckBox.setBounds(300,125,20,20);
         mainGUI.add(showPasswordCheckBox);
 
         JButton buttonConfirm = new JButton("确认注册");
-        buttonConfirm.setBounds(155, 275, 100, 25);
+        buttonConfirm.setBounds(150, 325, 100, 25);
         mainGUI.add(buttonConfirm);
 
         mainGUI.setSize(400, 400);
         LoginGUI.centerWindow(mainGUI);
         mainGUI.setVisible(true);
         mainGUI.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
 
         showPasswordCheckBox.addActionListener(new ActionListener() {
             @Override
@@ -62,14 +80,25 @@ public class RegisterGUI {
                 }
             }
         });
-
+        sendVerificationCodeButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                verificationCode.replace(0,6,EmailUtil.generateVerificationCode());
+                try {
+                    EmailUtil.sendEmail(emailField.getText(),"你的验证码","你的验证码是："+verificationCode);
+                } catch (MessagingException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+        });
         buttonConfirm.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 boolean registersuccess = false;
                 String username = userID.getText();
                 String userpwd = new String(password.getPassword());
-                String answertext= answer.getText();
+                String userEmail = emailField.getText();
+                String userCode = codeField.getText();
                 boolean isAlphanumeric = username.matches("^[a-zA-Z0-9]+$");
                 boolean isPwdAlpha = false;
                 boolean isSpecialChar = false;
@@ -107,10 +136,10 @@ public class RegisterGUI {
                         sum++;
                     }
                 }
-                if ((username.length() > 4) && (username.length() < 40) && isAlphanumeric && sum >= 2 && (userpwd.length() >= 4) && (userpwd.length() <= 40)) {
+                if ((username.length() > 4) && (username.length() < 40) && isAlphanumeric && sum >= 2 && (userpwd.length() >= 4) && (userpwd.length() <= 40) && (userCode.equals(verificationCode.toString()))) {
                     try {
                         BufferedWriter writer = new BufferedWriter(new FileWriter(filePath, true));
-                        writer.append(username + ',' + userpwd +','+ answertext +'\n');
+                        writer.append(username+','+PasswordUtils.hashPasswordWithUsernameAsSalt(userpwd,username) +','+ userEmail +'\n');
                         writer.close();
                     } catch (IOException a) {
                         a.printStackTrace();
